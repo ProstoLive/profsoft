@@ -10,4 +10,8 @@ class Task(Base):
     external_id = Column(String, unique=True, index=True)
     status = Column(String, default="pending")
     result = Column(Text, nullable=True)
+    input_text = Column(Text, nullable=True)
+    attempts = Column(Integer, default=0, nullable=False)
+    error = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

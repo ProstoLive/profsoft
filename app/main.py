@@ -1,13 +1,17 @@
+import logging
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from sqlalchemy.exc import OperationalError
 
 from app.api.endpoints import health, tasks
+from app.core.config import settings
 from app.db.database import Base, engine
 from app.models import database_models  # noqa: F401
+from app.workers.scheduler import start_scheduler
 
-app = FastAPI(title="AI microservice skeleton")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 
 def create_tables_with_retry(attempts: int = 10, delay_seconds: float = 1.5) -> None:
@@ -21,7 +25,17 @@ def create_tables_with_retry(attempts: int = 10, delay_seconds: float = 1.5) -> 
             time.sleep(delay_seconds)
 
 
-create_tables_with_retry()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_tables_with_retry()
+
+    scheduler = start_scheduler() if settings.RUN_WORKER else None
+    yield
+    if scheduler is not None:
+        scheduler.shutdown()
+
+
+app = FastAPI(title="AI microservice skeleton", lifespan=lifespan)
 
 app.include_router(health.router)
 app.include_router(tasks.router)
