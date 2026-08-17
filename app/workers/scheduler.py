@@ -5,7 +5,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from app.core.config import settings
 from app.db.database import SessionLocal
 from app.services.ai_service import classify
+from app.services.document_service import list_idle_documents
 from app.services.export_service import send_result
+from app.services.index_service import index_document
 from app.services.task_service import (
     claim_one_pending,
     list_done_for_export,
@@ -60,11 +62,24 @@ def reset_stuck_job() -> None:
         db.close()
 
 
+def index_pending_documents() -> None:
+    db = SessionLocal()
+    try:
+        for document in list_idle_documents(db):
+            try:
+                index_document(db, document)
+            except Exception as e:
+                logger.warning("document %s: indexing job failed (%s)", document.id, e)
+    finally:
+        db.close()
+
+
 def start_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler()
     scheduler.add_job(process_pending, "interval", seconds=settings.POLL_INTERVAL)
     scheduler.add_job(export_done, "interval", seconds=settings.POLL_INTERVAL)
     scheduler.add_job(reset_stuck_job, "interval", seconds=60)
+    scheduler.add_job(index_pending_documents, "interval", seconds=settings.POLL_INTERVAL)
     scheduler.start()
     logger.info("scheduler started: poll_interval=%ss", settings.POLL_INTERVAL)
     return scheduler
