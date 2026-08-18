@@ -1,10 +1,9 @@
-import uuid
-
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.models.schemas import TaskCreate, TaskOut
+from app.services.source_service import import_tasks_from_source
 from app.services.task_service import create_task, list_tasks
 
 router = APIRouter(prefix="/tasks")
@@ -15,13 +14,9 @@ def import_task(task_in: TaskCreate, db: Session = Depends(get_db)):
     return create_task(db, external_id=task_in.external_id, input_text=task_in.input_text)
 
 
-@router.post("/mock", response_model=TaskOut)
-def create_mock_task(db: Session = Depends(get_db)):
-    return create_task(
-        db,
-        external_id=f"mock_{uuid.uuid4().hex[:8]}",
-        input_text="Отличный сервис, очень доволен!",
-    )
+@router.post("/import", response_model=list[TaskOut])
+def import_source_tasks(db: Session = Depends(get_db)):
+    return import_tasks_from_source(db)
 
 
 @router.get("", response_model=list[TaskOut])

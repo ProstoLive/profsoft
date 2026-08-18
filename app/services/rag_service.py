@@ -9,8 +9,8 @@ SYSTEM_PROMPT = (
 )
 
 
-def answer(question: str) -> dict:
-    points = search(question, settings.TOP_K)
+def answer(question: str, doc_id: int | None = None) -> dict:
+    points = search(question, settings.TOP_K, doc_id=doc_id)
 
     if not points:
         return {"answer": "В документации нет информации по этому вопросу.", "sources": []}

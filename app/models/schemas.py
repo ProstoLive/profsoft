@@ -44,6 +44,7 @@ class Source(BaseModel):
 
 class AskRequest(BaseModel):
     question: str
+    doc_id: int | None = None
 
 
 class AskResponse(BaseModel):

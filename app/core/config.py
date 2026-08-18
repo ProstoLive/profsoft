@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 500
     CHUNK_OVERLAP: int = 75
     TOP_K: int = 5
+    SCORE_THRESHOLD: float = 0.3
     QDRANT_URL: str = "http://qdrant:6333"
     COLLECTION: str = "docs"
 

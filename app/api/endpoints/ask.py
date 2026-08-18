@@ -8,4 +8,4 @@ router = APIRouter()
 
 @router.post("/ask", response_model=AskResponse)
 def ask(request: AskRequest):
-    return answer(request.question)
+    return answer(request.question, doc_id=request.doc_id)
